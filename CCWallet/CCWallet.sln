@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCWallet", "CCWallet\CCWallet.csproj", "{076142E1-50D6-4115-9BE9-0F8DF967AA0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCWallet", "CCWallet\CCWallet.csproj", "{076142E1-50D6-4115-9BE9-0F8DF967AA0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Classes", "Classes\Classes.csproj", "{DFBE89CF-8863-4E8F-B80B-21DDE59B0EC2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{076142E1-50D6-4115-9BE9-0F8DF967AA0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{076142E1-50D6-4115-9BE9-0F8DF967AA0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{076142E1-50D6-4115-9BE9-0F8DF967AA0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFBE89CF-8863-4E8F-B80B-21DDE59B0EC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFBE89CF-8863-4E8F-B80B-21DDE59B0EC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFBE89CF-8863-4E8F-B80B-21DDE59B0EC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFBE89CF-8863-4E8F-B80B-21DDE59B0EC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

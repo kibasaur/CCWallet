@@ -4,96 +4,233 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:cf="clr-namespace:CountryFlag;assembly=CountryFlag"
+        xmlns:cl="clr-namespace:Classes;assembly=Classes"
         xmlns:local="clr-namespace:CCWallet"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        mc:Ignorable="d" x:Name="CCW" ResizeMode="CanMinimize"
+        Title="MainWindow" MinHeight="600" MinWidth="1000" MaxHeight="600" MaxWidth="1000"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <Window.Resources>
+        <CollectionViewSource Source="{Binding ElementName=CCW, Path=currencyFlags}" x:Key="YourMenuItems"/>
+        <Style TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
 
+    <Grid x:Name="AppGrid">
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="5*"/>
+            <RowDefinition Height="5*"/>
+            <RowDefinition Height="5*"/>
+        </Grid.RowDefinitions>
 
-    <Grid>
-        <DockPanel LastChildFill="false">
-            <Menu DockPanel.Dock="Top" Height="20" Grid.Row="0">
-                
-                <Menu.Resources>
-                    <Style TargetType="{x:Type MenuItem}">
-                        <Style.Triggers>
-                            <Trigger Property="Role" Value="TopLevelHeader">
-                                <Setter Property="Template" 
-                                        Value="{DynamicResource {ComponentResourceKey ResourceId=TopLevelHeaderTemplateKey, TypeInTargetAssembly={x:Type MenuItem}}}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Menu.Resources>
-                
-                <MenuItem Header="_File">
-                    <MenuItem Header="_Save"/> Click="SaveFile" />
-                    <Separator />
-                    <MenuItem Header="_Exit"/> Click="ExitApp"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <!--Top menu with wallets and currencies-->
+        <DockPanel x:Name="MenuPanel" LastChildFill="false" Grid.ColumnSpan="6">
+            <Menu x:Name="DockMenu" DockPanel.Dock="Top" Height="26">
+
+                <MenuItem x:Name="Refresh" Header="_Refresh">
+                    <MenuItem Header="Refresh Market" Click="Refresh_Market"/>
+                    <MenuItem Header="Refresh Wallet" Click="Refresh_Wallet"/>
                 </MenuItem>
                 
-                <MenuItem Header="_Market"></MenuItem>
-                
-                <MenuItem Header="_Wallets">
-                    <MenuItem Header="_New Wallet..." ></MenuItem>
+                <MenuItem x:Name="menuWallet" Header="_Wallets">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}">
+                            <Setter Property="MenuItem.Header" Value="{Binding Name}"/>
+                            <EventSetter Event="Click" Handler="Wallet_Click"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
 
                 <MenuItem x:Name="FiatMenu">
                     <MenuItem.Header>
-                            <cf:CountryFlag x:Name="HeadFlag" Width="30" Code="US" Margin="0,1.25"/>
+                        <cf:CountryFlag HorizontalContentAlignment="Left" Content="{Binding currentCurrency[0]}" Width="30"/>
                     </MenuItem.Header>
-                    <MenuItem IsChecked="True" IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="US" Margin="0,3" />
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="EU" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="JP" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="GB" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="CN" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="AU" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="CA" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="CH" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="SE" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <MenuItem IsCheckable="true" Click="Select_Currency">
-                        <MenuItem.Header>
-                            <cf:CountryFlag Width="30" Code="NO" Margin="0,3"/>
-                        </MenuItem.Header>
-                    </MenuItem>
+
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}">
+                            <EventSetter Event="Click" Handler="Select_Currency"/>
+                            <Setter Property="IsCheckable" Value="True"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
             </Menu>
         </DockPanel>
+
+        <!--Wallet Prompt Mask-->
+        <Canvas Panel.ZIndex="2" x:Name="ConfirmMask" Grid.Row="1" Visibility="Hidden" Grid.RowSpan="3" Grid.ColumnSpan="6" Background="black" Opacity="0.2"/>
+
+        <!--Wallet Prompt for creation and deletion-->
+        <Canvas Panel.ZIndex="3" x:Name="ConfirmPrompt" Visibility="Hidden" Background="#FFF0F0F0" Height="90" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2">
+
+            <!--Creation-->
+            <StackPanel x:Name="NewWalletStackPanel" Width="328" Visibility="Hidden">
+
+                <Label Content="{Binding promptLabel}" Grid.ColumnSpan="2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                <TextBox x:Name="WalletName" Margin="20,0" Height="22" VerticalContentAlignment="Center" 
+                         Focusable="True" HorizontalContentAlignment="Center" KeyDown="Enter_Pressed"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Create Wallet" Width="100" Margin="10" Click="Create_Wallet" Background="LightBlue"/>
+                    <Button Content="Cancel" Click="Cancel_Prompt" Width="100" Margin="10" Background="PaleVioletRed"/>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--Deletetion-->
+            <StackPanel x:Name="DeleteWalletStackPanel" Width="328" Visibility="Hidden">
+
+                <Label Margin="0,10,0,0" Content="{Binding promptLabel}" Grid.ColumnSpan="2" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Yes" Width="100" Margin="10" Click="Delete_Wallet" Background="LightBlue" />
+                    <Button Content="No" Click="Cancel_Prompt" Width="100" Margin="10" Background="PaleVioletRed"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Canvas>
+
+
+        <!-- Content Grid -->
+        <Grid x:Name="ContentGrid" Grid.Row="1" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Market Grid-->
+            <GroupBox Header="Market" Margin="10,10,10,10" Grid.Column="0">
+                <Grid >
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="17*"/>
+                        <RowDefinition Height="4*"/>
+                    </Grid.RowDefinitions>
+
+                    <!--Market Info-->
+                    <ListView Margin="10,10,10,10" Height="auto" x:Name="MarketLV" MouseUp="MarketLV_MouseUp">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Right" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Rank" Width="40" DisplayMemberBinding="{Binding Rank}"/>
+                                <GridViewColumn Header="Symbol" Width="75" DisplayMemberBinding="{Binding Symbol}"/>
+                                <GridViewColumn Header="Currency" Width="159" DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="Price" Width="140" DisplayMemberBinding="{Binding PriceStr}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <!-- Adding Crypto -->
+                    <Canvas Grid.Row="1">
+                        <TextBlock x:Name="PromptBlock" MinWidth="130" Canvas.Right="30" Canvas.Top="-5" HorizontalAlignment="Right" Height="20" Text="{Binding eAddBalance, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Grid x:Name="AddCryptoGrid" Visibility="Hidden"  Canvas.Right="30" Canvas.Bottom="12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding addCryptoStr}" Width="150" TextAlignment="Right" FontWeight="Bold"/>
+                            
+                                <TextBox x:Name="AmountToWallet" PreviewTextInput="String_Is_Number" Width="150" Height="20" KeyDown="Enter_Pressed"
+                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Focusable="True" TextChanged="AmountToWallet_TextChanged" />
+                                <Button x:Name="AddCrypto" Content="Add To Wallet" 
+                                        VerticalAlignment="Bottom" Width="150" Margin="0,10,0,0"
+                                        Click="AddCrypto_Click"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <StackPanel Canvas.Bottom="41"  HorizontalAlignment="Left" Canvas.Left="30" VerticalAlignment="Center"  >
+                            <TextBlock Width="150" Height="20" Text="Filter By Currency/Symbol" />
+                            <TextBox x:Name="FilterMarket"  Width="150" Height="20" TextChanged="FilterMarket_TextChanged"
+                                HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+                            
+                        </StackPanel>
+                    </Canvas>
+                </Grid>
+            </GroupBox>
+
+            <!--Wallet Grid-->
+            <GroupBox x:Name="ShowWallet" Header="{Binding currentWallet.Name, UpdateSourceTrigger=PropertyChanged}" Margin="10,10,10,10" Grid.Column="1">
+                <Grid x:Name="cryptoBlock">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="17*"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="3*"/>
+                    </Grid.RowDefinitions>
+
+                    <!--Delete Wallet Button-->
+                    <Button Foreground="white" Background="PaleVioletRed" Width="15" Height="15"  VerticalContentAlignment="Top" 
+                            VerticalAlignment="Top" HorizontalAlignment="Right"  
+                            Grid.Row="0" Margin="0,-15,-10,0" Click="Delete_Wallet_Prompt">
+                        <TextBlock FontSize="12"  Text="x" Margin="0,-4,0,0"/>
+                    </Button>
+
+                    <!--Wallet Info-->
+                    <ListView Margin="10,10,10,10" Height="auto" x:Name="WalletLV" MouseUp="WalletLV_MouseUp">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Right" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Rank" Width="40" DisplayMemberBinding="{Binding Rank}"/>
+                                <GridViewColumn Header="Symbol" Width="50" DisplayMemberBinding="{Binding Symbol}"/>
+                                <GridViewColumn Header="Currency" Width="90" DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="Amount" Width="120" DisplayMemberBinding="{Binding AmountStr}"/>
+                                <GridViewColumn Header="Value" Width="130" DisplayMemberBinding="{Binding ValueStr}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <!--Ërror Prompt for Removing Crypto-->
+                    <TextBlock Height="20" Margin="16,0,0,10" Text="{Binding eSubBalance, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"/>
+                    <!--Total Value-->
+                    <DockPanel Grid.Row="1" HorizontalAlignment="Right" Margin="0,0,15,0">
+                        <TextBlock Margin="0,0,20,0" Text="Total Value: "  />
+                        <TextBlock Text="{Binding Path=currentWallet.FiatBalanceStr, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+
+                    <Grid Grid.Row="2" x:Name="ButtonGridWallets" Visibility="Hidden">
+
+                        <!--Remove Slider and Button-->
+                        <TextBox x:Name="WithdrawValue" Height="20" Width="290" Text="{Binding removeValue, UpdateSourceTrigger=PropertyChanged}" 
+                                 PreviewTextInput="String_Is_Number" Focusable="True" KeyDown="Enter_Pressed"
+                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                 VerticalAlignment="Top" HorizontalAlignment="Left"  Margin="15,10,0,0" TextChanged="WithdrawValue_TextChanged"/>
+                        <Slider x:Name="Slide" Maximum="100" TickFrequency="25" TickPlacement="BottomRight" IsSnapToTickEnabled="True"
+                                HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="300"
+                                Foreground="Transparent" ValueChanged="Slider_ValueChanged" IsMoveToPointEnabled="True" />
+                        <DockPanel Margin="0,0,0,-2" VerticalAlignment="Bottom">
+                            <TextBlock Text="0%" Margin="12,0,0,0"/>
+                            <TextBlock Text="25%" Margin="53,0,0,0"/>
+                            <TextBlock Text="50%" Margin="49,0,0,0"/>
+                            <TextBlock Text="75%" Margin="49,0,0,0"/>
+                            <TextBlock Text="100%" Margin="48,0,0,0"/>
+                        </DockPanel>
+                        <Button Width="120" Height="50" HorizontalAlignment="Right" VerticalAlignment="Top"  Grid.Row="2"
+                                Margin="0,10,15,0" Content="Remove From Wallet" Click="Remove_Value"/>
+                    </Grid>
+                </Grid>
+            </GroupBox>
+
+            <!--When no wallet has been created-->
+            <GroupBox x:Name="NoWallets" Header="Wallet" Visibility="Hidden" Margin="10,10,10,10" Grid.Column="1">
+                <Button x:Name="NewWalletButton" Content="Create Your First Wallet" 
+                        Click="New_Wallet_Prompt"  Width="200" Height="40"/>
+            </GroupBox>
+
+
+        </Grid>
 
 
     </Grid>
